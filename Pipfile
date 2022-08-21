@@ -10,6 +10,7 @@ bcrypt = "*"
 opencv-python = "*"
 utils = "*"
 gunicorn = "*"
+pyyaml = "*"
 
 [dev-packages]
 

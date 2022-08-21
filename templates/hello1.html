@@ -1,12 +1,18 @@
-<html lang="en">
+{% extends "base.html" %}
+{% block title %}Register System{% endblock %}
 
-<head>
-  <meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700&display=swap" rel="stylesheet">
-  <link href="static/style.css" rel="stylesheet">
+{% block content %}
+
+{% if message  %}
+    <div class="alert alert-secondary" role="alert">
+        <p>{{ message }}</p>
+    </div>
+{% endif %}
+
+
   <style>
     body{
-      background-color: rgb(26, 26, 50);
+      background-color: #e3f2fd;
 
     }
     .center {
@@ -26,12 +32,12 @@
     h1 {
       padding-top: 50px;
       text-align: center;
-      color: rgb(113, 111, 170)
+      color: rgb(0, 0, 0)
     }
 
     h3 {
       text-align: center;
-      color: white;
+      color: rgb(0, 0, 0);
     }
 
     p {
@@ -64,14 +70,14 @@
 
 <body>
 
-    <h1>Captured Image</h1>
+    <h1>Captured Images</h1>
   <div class="banner-text">
     <div class="animation-area">                                 
       <br>
       <br>
       <br>
       <div class="center">
-        <h1 align="center">IPOD</h1>
+        <h1 align="center"></h1>
 <!--<p>All images scraped from instagram.com/{{user_name}}</p>-->
     {% for hist in hists %}
         <img width="200px" height="200px" src="{{hist}}" alt="{{hist}}">
@@ -79,5 +85,5 @@
       </div>
     </div>
   </div>
-</body>
-</html>
+
+  {% endblock %}

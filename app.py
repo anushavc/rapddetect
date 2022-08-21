@@ -6,20 +6,28 @@ import cv2
 import os
 import cv2
 import urllib
+import glob
 from camera import VideoCamera
 import numpy as np
 from werkzeug.utils import secure_filename
 from urllib.request import Request, urlopen
 from flask import Flask, render_template, Response, request, redirect, flash, url_for
 
+
 app = Flask(__name__)
 app.secret_key = "testing"
 client = pymongo.MongoClient("mongodb+srv://anusha:anusha@cluster0.pvpfxmy.mongodb.net/?retryWrites=true&w=majority")
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
-UPLOAD_FOLDER = 'static'
+UPLOAD_FOLDER = 'static/uploads/'
+DOWNLOAD_FOLDER='static/return/'
+VIDEO_FOLDER='static/videos/'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+#app configurations
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
+app.config['VIDEO_FOLDER'] = VIDEO_FOLDER
 
 db = client.get_database('total_records')
 records = db.register
@@ -76,7 +84,6 @@ def login():
     message = 'Please login to your account'
     if "email" in session:
         return redirect(url_for("logged_in"))
-
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
@@ -101,7 +108,6 @@ def login():
 def video_feed():
     """ A route that returns a streamed response needs to return a Response object
     that is initialized with the generator function."""
-
     return Response(gen(VideoCamera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -133,17 +139,13 @@ fs = gridfs.GridFS(images)
 import time
 @app.route('/takeimage', methods=['POST'])
 def takeimage():
-    print("hello")
     #the email id of the logged in session
     print(session["email"])
     video = cv2.VideoCapture(0)
     if (video.isOpened() == False): 
         print("Error reading video file")
-    frame_width = int(video.get(3))
-    frame_height = int(video.get(4))
-    size = (frame_width, frame_height)
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(session["email"]+'filename.avi',fourcc, 20.0, (640,480))
+    out = cv2.VideoWriter(VIDEO_FOLDER+session["email"]+'filename.avi',fourcc, 20.0, (640,480))
     start_time = time.time()
     #5 seconds duration
     capture_duration = 4
@@ -159,7 +161,7 @@ def takeimage():
     out.release()
     cv2.destroyAllWindows() 
     print("The video was successfully saved")
-    vidcap = cv2.VideoCapture(session["email"]+'filename.avi')
+    vidcap = cv2.VideoCapture(VIDEO_FOLDER+session["email"]+'filename.avi')
     count = 0
     success = True
     fps = int(vidcap.get(cv2.CAP_PROP_FPS))
@@ -170,22 +172,24 @@ def takeimage():
         success,image = vidcap.read()
         print('read a new frame:',success)
         if count%(1*fps) == 0 :
-            cv2.imwrite('static/uploads/frame%d.jpg'%count,image)
-            file = 'static/uploads/frame%d.jpg'%count
+            cv2.imwrite(UPLOAD_FOLDER+'/frame%d.jpg'%count,image)
+            file = UPLOAD_FOLDER+'/frame%d.jpg'%count
             with open(file, 'rb') as f:
                 contents = f.read()
             id=fs.put(contents, filename="file"+session["email"])
             imageid.append(id)
         count+=1
-    print("hello")
+    filelist = glob.glob(os.path.join(DOWNLOAD_FOLDER, "*"))
+    for f in filelist:
+        os.remove(f)
     #calling the images from the database
     for i in imageid:
         outputdata =fs.get(i).read() 
-        outfilename = 'static/return/%s.jpg'%str(i)
+        outfilename = DOWNLOAD_FOLDER+'%s.jpg'%str(i)
         output= open(outfilename,"wb")
         output.write(outputdata)
     #fetching the images from return directory
-    basepath = f"static/return"
+    basepath =DOWNLOAD_FOLDER
     dir = os.walk(basepath)
     file_list = []
     for path, subdirs, files in dir:
