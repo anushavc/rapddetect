@@ -154,7 +154,6 @@ def takeimage():
         if ret==True:
             frame = cv2.flip(frame,1)
             out.write(frame)
-            cv2.imshow('frame',frame)
         else:
             break
     video.release()
